@@ -126,4 +126,11 @@ async function getTontineDetail(tontineId, requestingUserId) {
   return { tontine, members, currentRound, contributions, potBalance, isAdmin };
 }
 
-module.exports = { createTontine, joinTontine, getTontineDetail, getPotBalance };
+async function deleteTontine(tontineId) {
+  // La suppression en cascade (définie dans schema.sql) nettoie automatiquement
+  // membres, tours, cotisations et transactions liés à cette tontine.
+  const { error } = await supabase.from('tontines').delete().eq('id', tontineId);
+  if (error) throw new AppError('Impossible de supprimer la tontine.', 500);
+}
+
+module.exports = { createTontine, joinTontine, getTontineDetail, getPotBalance, deleteTontine };

@@ -37,4 +37,13 @@ async function detail(req, res, next) {
   }
 }
 
-module.exports = { create, join, detail };
+async function destroy(req, res, next) {
+  try {
+    await tontineService.deleteTontine(req.params.id);
+    res.json({ deleted: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { create, join, detail, destroy };

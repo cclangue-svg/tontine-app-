@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const validate = require('../middleware/validate');
 const { requireAuth } = require('../middleware/auth');
+const { requireOrganizer } = require('../middleware/permissions');
 const controller = require('../controllers/tontine.controller');
 
 const router = express.Router();
@@ -29,5 +30,8 @@ router.post(
 );
 
 router.get('/:id', requireAuth, controller.detail);
+
+// Suppression — réservée à l'organisateur de la tontine
+router.delete('/:id', requireAuth, requireOrganizer, controller.destroy);
 
 module.exports = router;

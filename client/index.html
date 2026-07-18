@@ -269,6 +269,12 @@
       <h2>Membres (<span id="member-count">0</span>)</h2>
       <div id="members-full-list" class="member-list"></div>
     </div>
+
+    <div id="danger-zone" class="hidden" style="margin-top: 4px; margin-bottom: 40px;">
+      <button id="btn-delete-tontine" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);">
+        🗑️ Supprimer cette tontine
+      </button>
+    </div>
   </div>
 </div>
 
@@ -439,6 +445,16 @@ document.getElementById('btn-back').addEventListener('click', () => {
   loadMyTontines();
 });
 
+document.getElementById('btn-delete-tontine').addEventListener('click', async () => {
+  if (!confirm('Supprimer définitivement cette tontine ? Tout son historique (membres, tours, cotisations) sera perdu. Cette action est irréversible.')) return;
+  try {
+    await api(`/tontines/${currentTontineId}`, { method: 'DELETE' });
+    toast('Tontine supprimée.');
+    showView('view-home');
+    loadMyTontines();
+  } catch (e) { toast(e.message); }
+});
+
 async function refreshDetail() {
   let data;
   try {
@@ -466,6 +482,7 @@ async function refreshDetail() {
   renderContributions(contributions, isAdmin);
   renderMembersFull(members);
   renderPot(tontine, potBalance, currentRound, isAdmin);
+  document.getElementById('danger-zone').classList.toggle('hidden', !isAdmin);
 }
 
 function renderWheel(members, currentRound) {
