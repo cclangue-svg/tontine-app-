@@ -12,7 +12,9 @@ router.post(
   [
     body('name').trim().isLength({ min: 2 }).withMessage('Le nom de la tontine est requis.'),
     body('contribution_amount').isFloat({ gt: 0 }).withMessage('Le montant doit être supérieur à 0.'),
-    body('frequency').isIn(['weekly', 'monthly']).withMessage('Fréquence invalide.')
+    body('frequency').isIn(['weekly', 'monthly']).withMessage('Fréquence invalide.'),
+    body('payment_number').optional({ checkFalsy: true }).trim().isLength({ min: 6 }).withMessage('Numéro de téléphone invalide.'),
+    body('payment_provider').optional({ checkFalsy: true }).isIn(['airtel_money', 'orange_money', 'autre']).withMessage('Opérateur invalide.')
   ],
   validate,
   controller.create

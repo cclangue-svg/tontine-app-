@@ -2,7 +2,7 @@ const supabase = require('../db/supabaseClient');
 const AppError = require('../utils/AppError');
 const { generateInviteCode } = require('../utils/inviteCode');
 
-async function createTontine({ name, organizerId, contributionAmount, frequency, currency }) {
+async function createTontine({ name, organizerId, contributionAmount, frequency, currency, paymentNumber, paymentProvider }) {
   const invite_code = generateInviteCode();
 
   const { data: tontine, error } = await supabase
@@ -13,7 +13,9 @@ async function createTontine({ name, organizerId, contributionAmount, frequency,
       contribution_amount: contributionAmount,
       frequency,
       currency: currency || 'XAF',
-      invite_code
+      invite_code,
+      payment_number: paymentNumber,
+      payment_provider: paymentProvider
     })
     .select()
     .single();

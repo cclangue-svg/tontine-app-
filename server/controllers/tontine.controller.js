@@ -2,13 +2,15 @@ const tontineService = require('../services/tontine.service');
 
 async function create(req, res, next) {
   try {
-    const { name, contribution_amount, frequency, currency } = req.body;
+    const { name, contribution_amount, frequency, currency, payment_number, payment_provider } = req.body;
     const tontine = await tontineService.createTontine({
       name,
       organizerId: req.user.id,
       contributionAmount: contribution_amount,
       frequency,
-      currency
+      currency,
+      paymentNumber: payment_number,
+      paymentProvider: payment_provider
     });
     res.status(201).json(tontine);
   } catch (err) {

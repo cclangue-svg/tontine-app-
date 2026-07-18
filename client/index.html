@@ -204,6 +204,19 @@
           </select>
         </div>
       </div>
+      <label>Numéro pour recevoir les cotisations</label>
+      <div class="row">
+        <div style="flex: 2;">
+          <input id="create-payment-number" placeholder="Ex: 66 12 34 56" />
+        </div>
+        <div style="flex: 1;">
+          <select id="create-payment-provider">
+            <option value="airtel_money">Airtel Money</option>
+            <option value="orange_money">Orange Money</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+      </div>
       <button id="btn-create">Créer la tontine</button>
     </div>
 
@@ -224,6 +237,12 @@
       <div class="invite-code">
         <div class="code" id="detail-code">——————</div>
         <div class="hint">Code d'invitation à partager</div>
+      </div>
+
+      <div id="payment-info-box" class="hidden" style="background: var(--teal-dim); border: 1px solid var(--teal); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
+        <div style="font-size: 12px; color: var(--teal); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">📲 Envoyer ta cotisation à</div>
+        <div style="font-family: 'Fraunces', serif; font-size: 20px; font-weight: 700; margin-top: 4px;" id="payment-info-number">—</div>
+        <div style="font-size: 13px; color: var(--teal);" id="payment-info-provider"></div>
       </div>
 
       <div class="wheel-container">
@@ -359,12 +378,14 @@ document.getElementById('btn-create').addEventListener('click', async () => {
   const name = document.getElementById('create-name').value.trim();
   const amount = parseFloat(document.getElementById('create-amount').value);
   const frequency = document.getElementById('create-frequency').value;
+  const payment_number = document.getElementById('create-payment-number').value.trim();
+  const payment_provider = document.getElementById('create-payment-provider').value;
   if (!name || !amount) return toast('Remplis tous les champs');
 
   try {
     const tontine = await api('/tontines', {
       method: 'POST',
-      body: JSON.stringify({ name, contribution_amount: amount, frequency })
+      body: JSON.stringify({ name, contribution_amount: amount, frequency, payment_number, payment_provider })
     });
     toast('Tontine créée !');
     openTontine(tontine.id);
@@ -429,6 +450,16 @@ async function refreshDetail() {
   document.getElementById('detail-name').textContent = tontine.name;
   document.getElementById('detail-code').textContent = tontine.invite_code;
   document.getElementById('member-count').textContent = members.length;
+
+  const paymentBox = document.getElementById('payment-info-box');
+  if (tontine.payment_number) {
+    paymentBox.classList.remove('hidden');
+    document.getElementById('payment-info-number').textContent = tontine.payment_number;
+    const providerLabels = { airtel_money: 'Airtel Money', orange_money: 'Orange Money', autre: 'Autre moyen' };
+    document.getElementById('payment-info-provider').textContent = providerLabels[tontine.payment_provider] || '';
+  } else {
+    paymentBox.classList.add('hidden');
+  }
 
   renderWheel(members, currentRound);
   renderRoundActions(tontine, currentRound, isAdmin);

@@ -28,6 +28,8 @@ create table if not exists tontines (
   currency text default 'XAF',
   invite_code text unique not null,
   status text default 'active' check (status in ('active', 'completed', 'archived')),
+  payment_number text,
+  payment_provider text check (payment_provider in ('airtel_money', 'orange_money', 'autre')),
   created_at timestamp with time zone default now()
 );
 
