@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cercle — Tontine digitale</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#1F2A24" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<link rel="icon" href="/icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ivory: #FBF8F2;
+    --ink: #1F2A24;
+    --gold: #C9962B;
+    --gold-dim: #E8CFA0;
+    --teal: #1B5E56;
+    --teal-dim: #DCEAE7;
+    --line: #E2DCCC;
+    --danger: #B3452F;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ivory);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  h1, h2, h3, .display {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* Header */
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .mark {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: conic-gradient(var(--gold) 0deg 90deg, var(--teal) 90deg 180deg, var(--gold-dim) 180deg 270deg, var(--teal-dim) 270deg 360deg);
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 22px; margin: 0; }
+  .tagline { color: #6B6455; font-size: 14px; margin: 4px 0 32px; }
+
+  /* Cards */
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 18px; margin: 0 0 16px; }
+
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #4A4436; }
+  input, select {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--line);
+    border-radius: 10px; font-size: 15px; font-family: inherit;
+    margin-bottom: 16px; background: var(--ivory);
+  }
+  input:focus, select:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+  button {
+    background: var(--ink); color: #fff; border: none;
+    padding: 13px 20px; border-radius: 10px; font-size: 15px; font-weight: 600;
+    cursor: pointer; font-family: inherit; width: 100%;
+  }
+  button:hover { background: #34433A; }
+  button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.secondary:hover { background: var(--ivory); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+  .tab { padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid var(--line); background: #fff; }
+  .tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  /* Wheel visualization - signature element */
+  .wheel-container { display: flex; justify-content: center; margin: 8px 0 24px; }
+  .wheel { position: relative; width: 220px; height: 220px; }
+  .wheel-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; width: 110px;
+  }
+  .wheel-center .label { font-size: 11px; color: #6B6455; text-transform: uppercase; letter-spacing: 0.05em; }
+  .wheel-center .name { font-family: 'Fraunces', serif; font-weight: 700; font-size: 17px; margin-top: 2px; }
+  .member-node {
+    position: absolute; width: 44px; height: 44px; border-radius: 50%;
+    background: var(--teal-dim); border: 2px solid var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--teal);
+    transform: translate(-50%, -50%);
+  }
+  .member-node.current { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .member-node.received { background: #E9E5D8; border-color: var(--line); color: #9A937F; }
+
+  .member-list { display: flex; flex-direction: column; gap: 10px; }
+  .member-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
+  }
+  .member-row .info { display: flex; align-items: center; gap: 10px; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+  .badge.paid { background: var(--teal-dim); color: var(--teal); }
+  .badge.unpaid { background: #F4E3DC; color: var(--danger); }
+  .badge.beneficiary { background: var(--gold-dim); color: #8A6314; }
+
+  .invite-code {
+    background: var(--ink); color: #fff; padding: 16px; border-radius: 12px;
+    text-align: center; margin-bottom: 20px;
+  }
+  .invite-code .code { font-family: 'Fraunces', serif; font-size: 28px; letter-spacing: 0.1em; }
+  .invite-code .hint { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: #8A8371; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 10px;
+    font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .hidden { display: none !important; }
+  .small-link { font-size: 13px; color: var(--teal); text-decoration: underline; cursor: pointer; text-align: center; margin-top: 12px; }
+
+  /* Cagnotte (pot) */
+  .pot-card {
+    background: var(--ink); color: #fff; border-radius: 16px; padding: 24px; margin-bottom: 20px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .pot-card .lock-icon { font-size: 13px; opacity: 0.75; letter-spacing: 0.04em; text-transform: uppercase; }
+  .pot-card .amount { font-family: 'Fraunces', serif; font-size: 40px; font-weight: 700; margin: 8px 0 4px; }
+  .pot-card .sub { font-size: 13px; opacity: 0.7; }
+  .pot-card button { margin-top: 16px; background: var(--gold); color: var(--ink); }
+  .pot-card button:hover { background: #DDAE45; }
+  .visibility-note { font-size: 12px; color: #8A8371; text-align: center; margin-top: 10px; }
+
+  /* Bouton installer l'app */
+  .install-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--teal-dim); border: 1px solid var(--teal); border-radius: 12px;
+    padding: 12px 16px; margin-bottom: 20px;
+  }
+  .install-bar span { font-size: 13px; color: var(--teal); font-weight: 600; }
+  .install-bar button { width: auto; padding: 8px 16px; font-size: 13px; background: var(--teal); }
+  .install-bar button:hover { background: #164A44; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="install-bar" class="install-bar hidden">
+    <span>📲 Installe Cercle pour l'utiliser hors connexion</span>
+    <button id="btn-install">Installer</button>
+  </div>
+
+  <header>
+    <div class="mark"></div>
+    <h1>Cercle</h1>
+  </header>
+  <p class="tagline">La tontine, sans le cahier ni les disputes.</p>
+
+  <!-- ONBOARDING -->
+  <div id="view-onboarding" class="card">
+    <h2>Commencer</h2>
+    <label for="onb-name">Ton nom</label>
+    <input id="onb-name" placeholder="Ex: Olivier Ronelngar" />
+    <label for="onb-phone">Ton téléphone</label>
+    <input id="onb-phone" placeholder="Ex: 66 XX XX XX" />
+    <button id="btn-continue">Continuer</button>
+  </div>
+
+  <!-- HOME -->
+  <div id="view-home" class="hidden">
+    <div class="tabs">
+      <div class="tab active" data-tab="mine">Mes tontines</div>
+      <div class="tab" data-tab="create">Créer</div>
+      <div class="tab" data-tab="join">Rejoindre</div>
+    </div>
+
+    <div id="tab-mine">
+      <div id="tontine-list" class="member-list"></div>
+      <div id="empty-mine" class="empty-state hidden">Tu n'as encore aucune tontine. Crée-en une ou rejoins-en une avec un code.</div>
+    </div>
+
+    <div id="tab-create" class="hidden card">
+      <h2>Créer une tontine</h2>
+      <label>Nom de la tontine</label>
+      <input id="create-name" placeholder="Ex: Tontine des amis" />
+      <div class="row">
+        <div>
+          <label>Montant / tour</label>
+          <input id="create-amount" type="number" placeholder="5000" />
+        </div>
+        <div>
+          <label>Fréquence</label>
+          <select id="create-frequency">
+            <option value="weekly">Hebdomadaire</option>
+            <option value="monthly">Mensuelle</option>
+          </select>
+        </div>
+      </div>
+      <button id="btn-create">Créer la tontine</button>
+    </div>
+
+    <div id="tab-join" class="hidden card">
+      <h2>Rejoindre avec un code</h2>
+      <label>Code d'invitation</label>
+      <input id="join-code" placeholder="Ex: A1B2C3" style="text-transform: uppercase;" />
+      <button id="btn-join">Rejoindre</button>
+    </div>
+  </div>
+
+  <!-- TONTINE DETAIL -->
+  <div id="view-detail" class="hidden">
+    <button class="secondary" id="btn-back" style="width: auto; margin-bottom: 20px; padding: 8px 16px;">← Retour</button>
+
+    <div class="card">
+      <h2 id="detail-name">—</h2>
+      <div class="invite-code">
+        <div class="code" id="detail-code">——————</div>
+        <div class="hint">Code d'invitation à partager</div>
+      </div>
+
+      <div class="wheel-container">
+        <div class="wheel" id="wheel"></div>
+      </div>
+
+      <div id="round-actions"></div>
+    </div>
+
+    <div class="pot-card">
+      <div class="lock-icon">🔒 Cagnotte de la tontine</div>
+      <div class="amount" id="pot-amount">0 XAF</div>
+      <div class="sub" id="pot-sub">Fonds déposés, en attente de distribution</div>
+      <div id="pot-admin-action"></div>
+    </div>
+    <div class="visibility-note">Visible par tous les membres. Seul l'administrateur peut distribuer ces fonds.</div>
+
+    <div class="card">
+      <h2>Cotisations du tour</h2>
+      <div id="contributions-list" class="member-list"></div>
+    </div>
+
+    <div class="card">
+      <h2>Membres (<span id="member-count">0</span>)</h2>
+      <div id="members-full-list" class="member-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+let authToken = localStorage.getItem('cercle_token') || null;
+let currentUser = JSON.parse(localStorage.getItem('cercle_user') || 'null');
+let currentTontineId = null;
+let deferredInstallPrompt = null;
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showView(id) {
+  ['view-onboarding', 'view-home', 'view-detail'].forEach(v => {
+    document.getElementById(v).classList.toggle('hidden', v !== id);
+  });
+}
+
+// Enveloppe fetch qui ajoute automatiquement le token JWT
+async function api(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+
+  const res = await fetch(`${API}${path}`, { ...options, headers });
+  const data = await res.json().catch(() => ({}));
+
+  if (res.status === 401) {
+    // Session expirée ou invalide : on force une reconnexion propre.
+    localStorage.removeItem('cercle_token');
+    localStorage.removeItem('cercle_user');
+    authToken = null;
+    currentUser = null;
+    showView('view-onboarding');
+    toast('Session expirée, reconnecte-toi.');
+    throw new Error('unauthorized');
+  }
+
+  if (!res.ok) throw new Error(data.error || 'Erreur inconnue');
+  return data;
+}
+
+// ---------- PWA: INSTALLATION ----------
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('install-bar').classList.remove('hidden');
+});
+
+document.getElementById('btn-install').addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById('install-bar').classList.add('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-bar').classList.add('hidden');
+  toast('Cercle est installé sur ton appareil !');
+});
+
+// ---------- ONBOARDING ----------
+document.getElementById('btn-continue').addEventListener('click', async () => {
+  const name = document.getElementById('onb-name').value.trim();
+  const phone = document.getElementById('onb-phone').value.trim();
+  if (!name || !phone) return toast('Remplis ton nom et ton téléphone');
+
+  try {
+    const { user, token } = await api('/users/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, phone })
+    });
+    currentUser = user;
+    authToken = token;
+    localStorage.setItem('cercle_user', JSON.stringify(user));
+    localStorage.setItem('cercle_token', token);
+    showView('view-home');
+    loadMyTontines();
+  } catch (e) { toast(e.message); }
+});
+
+// ---------- TABS ----------
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const name = tab.dataset.tab;
+    ['mine', 'create', 'join'].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== name);
+    });
+  });
+});
+
+// ---------- CREATE TONTINE ----------
+document.getElementById('btn-create').addEventListener('click', async () => {
+  const name = document.getElementById('create-name').value.trim();
+  const amount = parseFloat(document.getElementById('create-amount').value);
+  const frequency = document.getElementById('create-frequency').value;
+  if (!name || !amount) return toast('Remplis tous les champs');
+
+  try {
+    const tontine = await api('/tontines', {
+      method: 'POST',
+      body: JSON.stringify({ name, contribution_amount: amount, frequency })
+    });
+    toast('Tontine créée !');
+    openTontine(tontine.id);
+  } catch (e) { toast(e.message); }
+});
+
+// ---------- JOIN TONTINE ----------
+document.getElementById('btn-join').addEventListener('click', async () => {
+  const invite_code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (!invite_code) return toast('Entre un code d\'invitation');
+
+  try {
+    const data = await api('/tontines/join', {
+      method: 'POST',
+      body: JSON.stringify({ invite_code })
+    });
+    toast('Tu as rejoint la tontine !');
+    openTontine(data.tontine.id);
+  } catch (e) { toast(e.message); }
+});
+
+// ---------- LOAD MY TONTINES ----------
+async function loadMyTontines() {
+  try {
+    const list = await api('/users/me/tontines');
+    const container = document.getElementById('tontine-list');
+    const empty = document.getElementById('empty-mine');
+    container.innerHTML = '';
+    if (!list.length) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    list.forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'member-row';
+      row.style.cursor = 'pointer';
+      row.innerHTML = `<div class="info"><div><strong>${t.name}</strong><div style="font-size:13px;color:#8A8371;">${t.contribution_amount} ${t.currency} / ${t.frequency === 'weekly' ? 'semaine' : 'mois'}</div></div></div><span>→</span>`;
+      row.addEventListener('click', () => openTontine(t.id));
+      container.appendChild(row);
+    });
+  } catch (e) { /* déjà géré par api() */ }
+}
+
+// ---------- OPEN TONTINE DETAIL ----------
+async function openTontine(id) {
+  currentTontineId = id;
+  showView('view-detail');
+  await refreshDetail();
+}
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  showView('view-home');
+  loadMyTontines();
+});
+
+async function refreshDetail() {
+  let data;
+  try {
+    data = await api(`/tontines/${currentTontineId}`);
+  } catch (e) { return; }
+
+  const { tontine, members, currentRound, contributions, potBalance, isAdmin } = data;
+
+  document.getElementById('detail-name').textContent = tontine.name;
+  document.getElementById('detail-code').textContent = tontine.invite_code;
+  document.getElementById('member-count').textContent = members.length;
+
+  renderWheel(members, currentRound);
+  renderRoundActions(tontine, currentRound, isAdmin);
+  renderContributions(contributions, isAdmin);
+  renderMembersFull(members);
+  renderPot(tontine, potBalance, currentRound, isAdmin);
+}
+
+function renderWheel(members, currentRound) {
+  const wheel = document.getElementById('wheel');
+  wheel.innerHTML = '';
+  const center = document.createElement('div');
+  center.className = 'wheel-center';
+  const beneficiaryName = currentRound?.tontine_members?.users?.name || '—';
+  center.innerHTML = `<div class="label">Tour actuel</div><div class="name">${currentRound ? beneficiaryName : 'Aucun'}</div>`;
+  wheel.appendChild(center);
+
+  const R = 90;
+  members.forEach((m, i) => {
+    const angle = (2 * Math.PI * i) / members.length - Math.PI / 2;
+    const x = 110 + R * Math.cos(angle);
+    const y = 110 + R * Math.sin(angle);
+    const node = document.createElement('div');
+    let cls = 'member-node';
+    if (currentRound && currentRound.beneficiary_member_id === m.id) cls += ' current';
+    else if (m.has_received) cls += ' received';
+    node.className = cls;
+    node.style.left = x + 'px';
+    node.style.top = y + 'px';
+    const initials = (m.users?.name || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    node.textContent = initials;
+    node.title = m.users?.name || '';
+    wheel.appendChild(node);
+  });
+}
+
+function renderRoundActions(tontine, currentRound, isAdmin) {
+  const el = document.getElementById('round-actions');
+
+  if (!currentRound) {
+    el.innerHTML = isAdmin
+      ? `<button id="btn-start-round">Démarrer le premier tour</button>`
+      : `<p style="text-align:center;color:#8A8371;font-size:14px;">En attente que l'administrateur démarre un tour.</p>`;
+    if (isAdmin) document.getElementById('btn-start-round').addEventListener('click', startRound);
+    return;
+  }
+
+  el.innerHTML = `<p style="text-align:center;color:#8A8371;font-size:14px;">Tour #${currentRound.round_number} en cours.</p>`;
+}
+
+async function startRound() {
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 7);
+  try {
+    await api(`/tontines/${currentTontineId}/rounds`, {
+      method: 'POST',
+      body: JSON.stringify({ due_date: dueDate.toISOString().split('T')[0] })
+    });
+    toast('Nouveau tour démarré !');
+    refreshDetail();
+  } catch (e) { toast(e.message); }
+}
+
+// ---------- CAGNOTTE (visible par tous, verrouillée pour les non-admins) ----------
+function renderPot(tontine, potBalance, currentRound, isAdmin) {
+  const amountEl = document.getElementById('pot-amount');
+  const subEl = document.getElementById('pot-sub');
+  const actionEl = document.getElementById('pot-admin-action');
+
+  amountEl.textContent = `${potBalance.toLocaleString('fr-FR')} ${tontine.currency}`;
+
+  if (potBalance <= 0) {
+    subEl.textContent = 'Aucun fonds en attente pour le moment';
+  } else {
+    subEl.textContent = 'Fonds déposés, en attente de distribution';
+  }
+
+  actionEl.innerHTML = '';
+  if (isAdmin && currentRound && potBalance > 0) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Distribuer les fonds au bénéficiaire';
+    btn.addEventListener('click', () => disburseRound(currentRound.id));
+    actionEl.appendChild(btn);
+  }
+}
+
+async function disburseRound(roundId) {
+  if (!confirm('Confirmer la distribution de la cagnotte au bénéficiaire de ce tour ? Cette action est définitive.')) return;
+  try {
+    const result = await api(`/rounds/${roundId}/disburse`, { method: 'POST' });
+    toast(`${result.disbursedAmount.toLocaleString('fr-FR')} distribués !`);
+    refreshDetail();
+  } catch (e) { toast(e.message); }
+}
+
+function renderContributions(contributions, isAdmin) {
+  const el = document.getElementById('contributions-list');
+  el.innerHTML = '';
+  if (!contributions.length) {
+    el.innerHTML = '<div class="empty-state">Aucun tour en cours.</div>';
+    return;
+  }
+  contributions.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'member-row';
+    const name = c.tontine_members?.users?.name || 'Membre';
+    const canMark = isAdmin && !c.paid;
+    row.innerHTML = `
+      <div class="info"><strong>${name}</strong></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="badge ${c.paid ? 'paid' : 'unpaid'}">${c.paid ? 'Payé' : 'En attente'}</span>
+        ${canMark ? `<button class="secondary" style="width:auto;padding:6px 12px;font-size:13px;" data-id="${c.id}">Marquer payé</button>` : ''}
+      </div>
+    `;
+    if (canMark) {
+      row.querySelector('button').addEventListener('click', () => markPaid(c.id));
+    }
+    el.appendChild(row);
+  });
+}
+
+async function markPaid(contributionId) {
+  try {
+    await api(`/contributions/${contributionId}/mark-paid`, {
+      method: 'POST',
+      body: JSON.stringify({ payment_method: 'mobile_money' })
+    });
+    toast('Paiement confirmé');
+    refreshDetail();
+  } catch (e) { toast(e.message); }
+}
+
+function renderMembersFull(members) {
+  const el = document.getElementById('members-full-list');
+  el.innerHTML = '';
+  members.forEach(m => {
+    const row = document.createElement('div');
+    row.className = 'member-row';
+    row.innerHTML = `
+      <div class="info"><strong>#${m.payout_order}</strong>&nbsp; ${m.users?.name || '—'}</div>
+      ${m.has_received ? '<span class="badge paid">A reçu</span>' : ''}
+    `;
+    el.appendChild(row);
+  });
+}
+
+// ---------- INIT ----------
+if (currentUser && authToken) {
+  showView('view-home');
+  loadMyTontines();
+} else {
+  showView('view-onboarding');
+}
+</script>
+</body>
+</html>
